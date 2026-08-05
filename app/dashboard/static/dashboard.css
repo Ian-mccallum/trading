@@ -1,0 +1,528 @@
+/* quantplatform operator dashboard
+   Dark, chart-first, consumer-fintech vocabulary. See docs/spec-dashboard.md.
+   Green and red are lifted to clear WCAG AA *as text* on the near-black
+   ground; the usual dark-UI failure is a red that only passes as a fill. */
+
+:root {
+  --bg: oklch(0.120 0 0);
+  --surface: oklch(0.180 0.010 260);
+  --surface-2: oklch(0.235 0.012 260);
+  --hairline: oklch(0.290 0.010 260);
+  --ink: oklch(0.970 0.002 260);
+  --muted: oklch(0.680 0.008 260);
+  --primary: oklch(0.620 0.160 260);
+  --up: oklch(0.720 0.180 150);
+  --down: oklch(0.650 0.200 25);
+
+  --step--1: 0.8125rem;
+  --step-0: 0.9375rem;
+  --step-1: 1.125rem;
+  --step-2: 1.35rem;
+  --display: 2.75rem;
+
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2.25rem;
+  --sp-7: 3.5rem;
+
+  --radius: 10px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1); /* ease-out-quart */
+
+  --z-sticky: 100;
+  --z-tooltip: 200;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.shell {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 var(--sp-4) var(--sp-7);
+}
+
+/* ---------------------------------------------------------------- system strip
+   Quiet when healthy (a working system should look unremarkable), full-width
+   and unmissable when something is blocked. The asymmetry is the design. */
+
+.strip {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: var(--bg);
+  border-bottom: 1px solid var(--hairline);
+  margin: 0 calc(-1 * var(--sp-4));
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+
+.strip__dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--up); flex: none;
+}
+
+.strip[data-state="halted"],
+.strip[data-state="stalled"] {
+  background: color-mix(in oklch, var(--down) 16%, var(--bg));
+  border-bottom-color: color-mix(in oklch, var(--down) 45%, var(--bg));
+  color: var(--ink);
+  padding-block: var(--sp-4);
+}
+.strip[data-state="halted"] .strip__dot,
+.strip[data-state="stalled"] .strip__dot { background: var(--down); }
+.strip[data-state="stalled"] {
+  background: color-mix(in oklch, var(--muted) 12%, var(--bg));
+  border-bottom-color: var(--hairline);
+}
+
+.strip__block { display: flex; align-items: center; gap: var(--sp-2); }
+.strip__block strong { font-weight: 600; }
+.strip__spacer { margin-left: auto; }
+
+/* ---------------------------------------------------------------- portfolio */
+
+.portfolio { padding-top: var(--sp-6); }
+
+.portfolio__label {
+  color: var(--muted);
+  font-size: var(--step--1);
+  margin: 0 0 var(--sp-1);
+}
+
+.portfolio__value {
+  font-size: var(--display);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.portfolio__change {
+  display: flex; align-items: center; gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  font-size: var(--step-0);
+  font-weight: 550;
+  min-height: 1.5rem;
+}
+.portfolio__change[data-dir="up"] { color: var(--up); }
+.portfolio__change[data-dir="down"] { color: var(--down); }
+.portfolio__change[data-dir="flat"] { color: var(--muted); }
+.portfolio__change .period { color: var(--muted); font-weight: 400; }
+
+/* ---------------------------------------------------------------- chart */
+
+.chart {
+  position: relative;
+  margin-top: var(--sp-4);
+  height: 220px;
+  touch-action: pan-y;
+}
+.chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+.chart__line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chart__line[data-dir="up"] { stroke: var(--up); }
+.chart__line[data-dir="down"] { stroke: var(--down); }
+.chart__line[data-dir="flat"] { stroke: var(--muted); }
+
+.chart__area { opacity: 0.16; }
+
+.chart__cursor { stroke: var(--hairline); stroke-width: 1; }
+.chart__marker { r: 4; stroke: var(--bg); stroke-width: 2; }
+
+.chart__empty {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: var(--step--1);
+  border: 1px dashed var(--hairline);
+  border-radius: var(--radius);
+  text-align: center;
+  padding: var(--sp-4);
+}
+
+/* Range selector: a real radio group, not divs pretending to be buttons. */
+.ranges {
+  display: flex; gap: var(--sp-1);
+  margin-top: var(--sp-4);
+  border: 0; padding: 0;
+}
+.ranges legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.ranges label {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: var(--step--1);
+  font-weight: 550;
+  cursor: pointer;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+.ranges label:hover { background: var(--surface); color: var(--ink); }
+.ranges input { position: absolute; opacity: 0; pointer-events: none; }
+.ranges input:checked + label { background: var(--surface-2); color: var(--ink); }
+.ranges input:focus-visible + label { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------- sections */
+
+.section { margin-top: var(--sp-7); }
+
+.section__head {
+  display: flex; align-items: baseline; gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.section__title {
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.section__meta { color: var(--muted); font-size: var(--step--1); margin-left: auto; }
+
+/* ---------------------------------------------------------------- allocation */
+
+.allocation {
+  display: flex; height: 8px; border-radius: 999px; overflow: hidden;
+  background: var(--surface); margin-bottom: var(--sp-3);
+}
+.allocation__slice { height: 100%; }
+.allocation__legend {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4);
+  color: var(--muted); font-size: var(--step--1);
+  margin-bottom: var(--sp-4);
+}
+.allocation__key { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.allocation__swatch { width: 8px; height: 8px; border-radius: 2px; }
+
+/* ---------------------------------------------------------------- rows */
+
+.rows { border-top: 1px solid var(--hairline); }
+
+.row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.row__symbol {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-weight: 600;
+  font-size: var(--step-0);
+}
+.row__sub { color: var(--muted); font-size: var(--step--1); }
+.row__value { font-weight: 550; text-align: right; }
+.row__delta { text-align: right; font-size: var(--step--1); font-weight: 550; min-width: 4.5rem; }
+.row__delta[data-dir="up"] { color: var(--up); }
+.row__delta[data-dir="down"] { color: var(--down); }
+.row__delta[data-dir="flat"] { color: var(--muted); }
+
+/* ---------------------------------------------------------------- activity */
+
+.filters { display: flex; gap: var(--sp-1); margin-left: auto; border: 0; padding: 0; }
+.filters legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.filters label {
+  padding: var(--sp-1) var(--sp-3); border-radius: 999px;
+  font-size: var(--step--1); color: var(--muted); cursor: pointer; font-weight: 550;
+  transition: background 150ms var(--ease), color 150ms var(--ease);
+}
+.filters label:hover { background: var(--surface); color: var(--ink); }
+.filters input { position: absolute; opacity: 0; pointer-events: none; }
+.filters input:checked + label { background: var(--surface-2); color: var(--ink); }
+.filters input:focus-visible + label { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.decision { border-bottom: 1px solid var(--hairline); }
+
+.decision__summary {
+  display: grid;
+  grid-template-columns: 3.75rem 4.5rem 1fr auto;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-2);
+  background: none; border: 0; color: inherit; font: inherit;
+  text-align: left; cursor: pointer;
+  transition: background 150ms var(--ease);
+}
+.decision__summary:hover { background: var(--surface); }
+.decision__summary:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+.decision__time { color: var(--muted); font-size: var(--step--1); }
+.decision__what { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
+.decision__action { color: var(--muted); font-size: var(--step--1); }
+
+/* Status: shape + label + color. Never colour alone — this surface is built
+   on approved/rejected pairs and red/green is the commonest CVD. */
+.badge {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  font-size: var(--step--1); font-weight: 550; white-space: nowrap;
+}
+.badge[data-tone="up"] { color: var(--up); }
+.badge[data-tone="down"] { color: var(--down); }
+.badge[data-tone="ok"] { color: var(--up); }
+.badge[data-tone="neutral"] { color: var(--muted); }
+.badge__glyph { font-size: 0.9em; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  padding: 0.075rem var(--sp-2);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.75rem; font-weight: 550;
+  white-space: nowrap;
+}
+
+.decision__detail {
+  display: none;
+  background: var(--surface);
+  padding: var(--sp-4) var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--hairline);
+}
+.decision[open] .decision__detail { display: block; }
+
+.reason {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  background: color-mix(in oklch, var(--down) 12%, var(--surface));
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-size: var(--step--1);
+}
+.reason + .reason { margin-top: calc(-1 * var(--sp-2)); }
+
+.criteria { list-style: none; margin: 0 0 var(--sp-4); padding: 0; display: grid; gap: var(--sp-1); }
+.criteria li { display: flex; gap: var(--sp-2); align-items: baseline; font-size: var(--step--1); }
+.criteria li[data-passed="false"] { color: var(--ink); }
+.criteria li[data-passed="true"] { color: var(--muted); }
+.criteria__mark { flex: none; width: 1rem; }
+.criteria li[data-passed="true"] .criteria__mark { color: var(--up); }
+.criteria li[data-passed="false"] .criteria__mark { color: var(--down); }
+
+.facts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--sp-3); margin: 0;
+  font-size: var(--step--1);
+}
+.facts div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.facts dt { color: var(--muted); }
+.facts dd {
+  margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Strategy names like permanent_portfolio_vti have no break opportunities
+     and would otherwise run straight into the next column. */
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------- volume */
+
+/* A 14-day strip: bars are capped so they read as a chart rather than as a
+   row of blocks, and the strip stays left-aligned like a timeline. */
+.volume {
+  display: flex; align-items: flex-end; justify-content: flex-start;
+  gap: 4px; height: 34px; margin-bottom: var(--sp-4);
+}
+.volume__day {
+  flex: 1 1 0; max-width: 18px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  gap: 1px; min-width: 0;
+}
+.volume__seg { border-radius: 1px; min-height: 0; }
+.volume__seg--ok { background: var(--up); }
+.volume__seg--no { background: var(--down); }
+.volume__empty { background: var(--surface-2); height: 2px; border-radius: 1px; }
+
+/* ---------------------------------------------------------------- personas */
+
+/* Personas are configuration, not order flow, so they may be interactive
+   while the rest of the surface stays read-only. */
+.personas { display: grid; gap: var(--sp-2); }
+.persona {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--surface); border-radius: var(--radius);
+  font-size: var(--step--1);
+}
+.persona__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--hairline); flex: none; }
+.persona[data-active="true"] .persona__dot { background: var(--up); }
+.persona[data-active="true"] { color: var(--ink); }
+.persona[data-active="false"] { color: var(--muted); }
+.persona__name { font-weight: 550; }
+.persona__meta { color: var(--muted); font-size: 0.75rem; }
+/* The fidelity note is shown inline, never as a tooltip: the whole point of
+   recording that All Weather is an unlevered approximation is that it should
+   be in front of someone at the moment they switch it on. */
+.persona__note {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  max-width: 68ch;
+}
+
+.btn {
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit; font-size: var(--step--1); font-weight: 550;
+  cursor: pointer; white-space: nowrap;
+  transition: background 150ms var(--ease), border-color 150ms var(--ease);
+}
+.btn:hover { background: var(--hairline); }
+.btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn[disabled] { opacity: 0.5; cursor: default; }
+.btn--start { border-color: color-mix(in oklch, var(--up) 45%, var(--hairline)); }
+.btn--start:hover { background: color-mix(in oklch, var(--up) 18%, var(--surface-2)); }
+/* Stopping is the safe direction and is never gated behind confirmation. */
+.btn--stop { border-color: color-mix(in oklch, var(--down) 40%, var(--hairline)); }
+.btn--stop:hover { background: color-mix(in oklch, var(--down) 16%, var(--surface-2)); }
+
+.confirm {
+  grid-column: 1 / -1;
+  display: grid; gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--surface-2);
+  border-radius: var(--radius);
+}
+.confirm__row { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.confirm input {
+  flex: 1 1 14rem; min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg); border: 1px solid var(--hairline);
+  border-radius: var(--radius); color: var(--ink); font: inherit;
+  font-size: var(--step--1);
+}
+.confirm input:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.confirm__hint { color: var(--muted); font-size: 0.75rem; }
+.confirm__error { color: var(--down); font-size: 0.75rem; }
+
+/* ---------------------------------------------------------------- states */
+
+.empty {
+  padding: var(--sp-5) var(--sp-4);
+  color: var(--muted);
+  font-size: var(--step--1);
+  text-align: center;
+  border: 1px dashed var(--hairline);
+  border-radius: var(--radius);
+}
+.empty strong { color: var(--ink); display: block; margin-bottom: var(--sp-1); font-weight: 550; }
+
+.hint {
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: var(--step--1);
+  margin-bottom: var(--sp-3);
+}
+.hint strong { color: var(--ink); font-weight: 550; }
+
+.notice {
+  padding: var(--sp-3) var(--sp-4);
+  background: color-mix(in oklch, var(--down) 14%, var(--bg));
+  border-radius: var(--radius);
+  font-size: var(--step--1);
+}
+
+/* Skeletons at real heights, so nothing reflows when data lands. */
+.skeleton { background: var(--surface); border-radius: var(--radius); animation: pulse 1.6s ease-in-out infinite; }
+.skeleton--value { height: var(--display); width: 12rem; margin-bottom: var(--sp-3); }
+.skeleton--chart { height: 220px; margin-top: var(--sp-4); }
+.skeleton--row { height: 3rem; margin-bottom: 2px; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+/* ---------------------------------------------------------------- token gate */
+
+.gate { max-width: 24rem; margin: 20vh auto; padding: 0 var(--sp-4); }
+.gate h1 { font-size: var(--step-2); margin: 0 0 var(--sp-2); font-weight: 620; letter-spacing: -0.01em; }
+.gate p { color: var(--muted); font-size: var(--step--1); margin: 0 0 var(--sp-4); }
+.gate input {
+  width: 100%; padding: var(--sp-3);
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: var(--radius); color: var(--ink); font: inherit;
+}
+.gate input:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; border-color: transparent; }
+.gate button {
+  margin-top: var(--sp-3); width: 100%; padding: var(--sp-3);
+  background: var(--primary); color: oklch(0.99 0 0); border: 0;
+  border-radius: var(--radius); font: inherit; font-weight: 600; cursor: pointer;
+  transition: filter 150ms var(--ease);
+}
+.gate button:hover { filter: brightness(1.1); }
+.gate button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.gate__error { color: var(--down); font-size: var(--step--1); margin-top: var(--sp-3); }
+
+.footer {
+  margin-top: var(--sp-7); padding-top: var(--sp-4);
+  border-top: 1px solid var(--hairline);
+  color: var(--muted); font-size: 0.75rem;
+  display: flex; gap: var(--sp-3); flex-wrap: wrap;
+}
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- responsive
+   Structural only: layout collapses, type never scales fluidly. */
+
+@media (max-width: 720px) {
+  :root { --display: 2.125rem; }
+  .chart { height: 160px; }
+  .skeleton--chart { height: 160px; }
+  .row { grid-template-columns: 3.75rem 1fr auto; }
+  .row__delta { display: none; }
+  .section__meta { width: 100%; margin-left: 0; }
+
+  /* Four items do not fit one narrow row, so wrap deliberately rather than
+     letting the grid stretch the chip and push the badge onto its own line:
+     row 1 carries what happened and its outcome, row 2 the metadata. */
+  .decision__summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    row-gap: var(--sp-1);
+  }
+  .decision__what { order: 1; flex: 1 1 auto; min-width: 0; }
+  .decision__summary .badge { order: 2; margin-left: auto; }
+  .decision__time { order: 3; flex: none; }
+  .decision__summary .chip { order: 4; flex: none; }
+
+  .filters { width: 100%; margin-left: 0; flex-wrap: wrap; }
+  .facts { grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

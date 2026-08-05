@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>quantplatform</title>
+<link rel="stylesheet" href="/dashboard/static/dashboard.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='4' fill='%231e1e24'/><path d='M3 11l3-4 3 2 4-6' stroke='%2340c46a' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+</head>
+<body>
+
+<!-- Token gate. The shell carries no data, so it needs no auth; the data
+     endpoint does. The token is held in sessionStorage and sent as a header,
+     never placed in the URL where it would land in history. -->
+<div class="gate" id="gate" hidden>
+  <h1>Operator dashboard</h1>
+  <p>Enter the admin token to view platform activity. It stays in this browser tab only.</p>
+  <form id="gate-form">
+    <label class="visually-hidden" for="token">Admin token</label>
+    <input id="token" name="token" type="password" autocomplete="current-password"
+           spellcheck="false" placeholder="Admin token" required>
+    <button type="submit">View dashboard</button>
+    <p class="gate__error" id="gate-error" role="alert" hidden></p>
+  </form>
+</div>
+
+<main id="app" hidden>
+  <header class="strip" id="strip" data-state="ok">
+    <span class="strip__dot" aria-hidden="true"></span>
+    <span id="strip-body">Loading</span>
+    <span class="strip__spacer"></span>
+    <span id="strip-env" class="chip"></span>
+  </header>
+
+  <div class="shell">
+    <section class="portfolio" aria-labelledby="portfolio-label">
+      <p class="portfolio__label" id="portfolio-label">Account value</p>
+      <p class="portfolio__value" id="equity"><span class="skeleton skeleton--value"></span></p>
+      <p class="portfolio__change" id="change" data-dir="flat"></p>
+
+      <div class="chart" id="chart" role="img" aria-label="Account value over time">
+        <div class="skeleton skeleton--chart"></div>
+      </div>
+
+      <fieldset class="ranges" id="ranges">
+        <legend>Chart time range</legend>
+      </fieldset>
+    </section>
+
+    <section class="section" aria-labelledby="holdings-title">
+      <div class="section__head">
+        <h2 class="section__title" id="holdings-title">Holdings</h2>
+        <span class="section__meta" id="holdings-meta"></span>
+      </div>
+      <div id="allocation"></div>
+      <div class="rows" id="holdings"></div>
+    </section>
+
+    <section class="section" aria-labelledby="activity-title">
+      <div class="section__head">
+        <h2 class="section__title" id="activity-title">Activity</h2>
+        <fieldset class="filters" id="filters">
+          <legend>Filter decisions</legend>
+        </fieldset>
+      </div>
+      <div class="volume" id="volume" role="img" aria-label="Decisions per day, last 14 days"></div>
+      <div class="rows" id="activity"></div>
+    </section>
+
+    <section class="section" aria-labelledby="personas-title">
+      <div class="section__head">
+        <h2 class="section__title" id="personas-title">Personas</h2>
+      </div>
+      <div class="personas" id="personas"></div>
+    </section>
+
+    <section class="section" id="rejections-section" aria-labelledby="rejections-title" hidden>
+      <div class="section__head">
+        <h2 class="section__title" id="rejections-title">Blocked in the last 24 hours</h2>
+      </div>
+      <div class="rows" id="rejections"></div>
+    </section>
+
+    <footer class="footer">
+      <span id="updated">—</span>
+      <span id="counts"></span>
+      <span>Read-only. Controls live on the admin API.</span>
+    </footer>
+  </div>
+</main>
+
+<script src="/dashboard/static/dashboard.js" defer></script>
+</body>
+</html>

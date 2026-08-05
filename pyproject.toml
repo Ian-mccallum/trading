@@ -1,0 +1,49 @@
+[project]
+name = "quantplatform"
+version = "0.1.0"
+description = "Self-learning algorithmic trading platform infrastructure (paper-first, gated live)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.12",
+    "pydantic-settings>=2.6",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.14",
+    "httpx>=0.28",
+    "redis>=5.2",
+    "arq>=0.26",
+    "structlog>=24.4",
+    "python-dateutil>=2.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "aiosqlite>=0.20",
+    "respx>=0.22",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501", "B008", "SIM105", "SIM108", "SIM117", "B904"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
